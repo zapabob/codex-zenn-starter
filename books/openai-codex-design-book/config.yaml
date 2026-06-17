@@ -1,5 +1,5 @@
 title: "OpenAI Codex実践設計入門"
-summary: "Codexを起動するだけで終わらせず、AGENTS.md、Sandbox、Approval、CI、zapabob/codexを通じて、AI開発エージェントが安全に働ける開発環境を作るための実践書です。"
+summary: "OpenAI Codexを、ただのAIコーディングCLIではなく、AI開発エージェントとして安全に運用するための実践書です。AGENTS.mdによるリポジトリ設計、SandboxとApprovalによる権限管理、CI/CDとの連携、zapabob/codexを題材にしたフォーク運用まで扱います。"
 topics: ["codex", "openai", "aiagent", "github", "windows"]
 published: true
 price: 0
