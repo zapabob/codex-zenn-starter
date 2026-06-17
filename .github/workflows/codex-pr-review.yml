@@ -11,11 +11,12 @@ jobs:
     permissions:
       contents: read
     outputs:
-      final_message: ${{ steps.run_codex.outputs.final-message }}
+      final_message: ${{ steps.run_codex.outputs.review_message }}
     steps:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Pre-fetch PR refs
@@ -28,16 +29,45 @@ jobs:
             "$PR_BASE_REF" \
             "+refs/pull/$PR_NUMBER/head"
 
-      - name: Run Codex
-        id: run_codex
-        uses: openai/codex-action@v1
+      - uses: actions/setup-node@v4
         with:
-          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-          prompt-file: .github/codex/prompts/review.md
-          sandbox: workspace-write
-          safety-strategy: drop-sudo
-          codex-home: .github/codex/home
-          output-file: codex-review.md
+          node-version: "20"
+
+      - name: Install Codex CLI
+        run: npm install -g @openai/codex
+
+      - name: Restore Codex ChatGPT auth
+        run: |
+          mkdir -p .github/codex/home
+          printf '%s' "$CODEX_AUTH_JSON" > .github/codex/home/auth.json
+          chmod 600 .github/codex/home/auth.json
+        env:
+          CODEX_AUTH_JSON: ${{ secrets.CODEX_AUTH_JSON }}
+
+      - name: Run Codex review (ChatGPT auth)
+        id: run_codex
+        env:
+          CODEX_HOME: ${{ github.workspace }}/.github/codex/home
+        run: |
+          set -euo pipefail
+          PROMPT_FILE=".github/codex/prompts/review.md"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF="${{ github.event.pull_request.base.ref }}"
+            codex exec review \
+              --base "$BASE_REF" \
+              -o codex-review.md \
+              "$(cat "$PROMPT_FILE")"
+          else
+            codex exec review \
+              --uncommitted \
+              -o codex-review.md \
+              "$(cat "$PROMPT_FILE")"
+          fi
+          {
+            echo 'review_message<<EOF'
+            cat codex-review.md
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
 
   post_review:
     runs-on: ubuntu-latest
