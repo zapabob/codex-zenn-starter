@@ -59,10 +59,11 @@ jobs:
               --uncommitted \
               -o codex-review.md
           fi
+          DELIM="CODEX_REVIEW_$(openssl rand -hex 16)"
           {
-            echo 'review_message<<EOF'
+            echo "review_message<<${DELIM}"
             cat codex-review.md
-            echo EOF
+            echo "${DELIM}"
           } >> "$GITHUB_OUTPUT"
 
   post_review:
