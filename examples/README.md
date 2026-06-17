@@ -30,7 +30,7 @@ Copy-Item examples\AGENTS.md.python-cli.md .\AGENTS.md
 |------|------|
 | `.github/codex/home/config.toml` | CI 用 Codex 設定（安全な sandbox） |
 | `.github/codex/prompts/review.md` | PR レビュー用プロンプト |
-| `.github/workflows/codex-pr-review.yml` | `openai/codex-action` ワークフロー例 |
+| `.github/workflows/codex-pr-review.yml` | ChatGPT 認証（`CODEX_AUTH_JSON`）で PR レビュー |
 
 ## 注意
 

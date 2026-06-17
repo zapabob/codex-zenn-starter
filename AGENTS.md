@@ -17,9 +17,10 @@ Zenn book starter for OpenAI Codex practice guide. Markdown content under `artic
 - Implementation logs go to `_docs/`; not part of Zenn published content.
 
 ## CI
-- PR review: `.github/workflows/codex-pr-review.yml` (requires `OPENAI_API_KEY` secret)
+- PR review: `.github/workflows/codex-pr-review.yml` (ChatGPT auth via `CODEX_AUTH_JSON` secret)
 - Config: `.github/codex/home/config.toml`
 - Prompt: `.github/codex/prompts/review.md`
+- Local auth: `~/.codex/auth.json` — never commit; use `gh secret set CODEX_AUTH_JSON` for CI
 
 ## Done
 - `npm run preview` shows expected pages at http://localhost:8000
