@@ -10,8 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    outputs:
-      final_message: ${{ steps.run_codex.outputs.review_message }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -45,7 +43,6 @@ jobs:
           CODEX_AUTH_JSON: ${{ secrets.CODEX_AUTH_JSON }}
 
       - name: Run Codex review (ChatGPT auth)
-        id: run_codex
         env:
           CODEX_HOME: ${{ github.workspace }}/.github/codex/home
         run: |
@@ -59,29 +56,40 @@ jobs:
               --uncommitted \
               -o codex-review.md
           fi
-          DELIM="CODEX_REVIEW_$(openssl rand -hex 16)"
-          {
-            echo "review_message<<${DELIM}"
-            cat codex-review.md
-            echo "${DELIM}"
-          } >> "$GITHUB_OUTPUT"
+          tr -d '\0' < codex-review.md > codex-review-clean.md
+
+      - name: Upload review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-review
+          path: codex-review-clean.md
+          if-no-files-found: error
 
   post_review:
     runs-on: ubuntu-latest
     needs: codex_review
-    if: github.event_name == 'pull_request' && needs.codex_review.outputs.final_message != ''
+    if: github.event_name == 'pull_request'
     permissions:
       pull-requests: write
     steps:
+      - name: Download review artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: codex-review
+
       - name: Post review comment
         uses: actions/github-script@v7
         with:
           script: |
+            const fs = require("fs");
+            const body = fs.readFileSync("codex-review-clean.md", "utf8").trim();
+            if (!body) {
+              core.setFailed("Codex review output is empty");
+              return;
+            }
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.pull_request.number,
-              body: process.env.CODEX_FINAL_MESSAGE,
+              body,
             });
-        env:
-          CODEX_FINAL_MESSAGE: ${{ needs.codex_review.outputs.final_message }}
