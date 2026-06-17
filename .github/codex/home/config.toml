@@ -1,0 +1,11 @@
+# CI profile for Codex GitHub Action
+# Used by .github/workflows/codex-pr-review.yml via codex-home: .github/codex/home
+
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+
+project_doc_fallback_filenames = ["AGENTS.md"]
+project_doc_max_bytes = 32768
+
+[sandbox_workspace_write]
+network_access = false

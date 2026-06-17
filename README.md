@@ -38,6 +38,16 @@ GitHub: https://github.com/zapabob/codex-zenn-starter
 
 Zenn連携: https://zenn.dev/dashboard/deploys から `codex-zenn-starter` を連携
 
+## Codex PR レビュー（CI）
+
+`.github/workflows/codex-pr-review.yml` が PR 時に Codex レビューを投稿します。
+
+**初回セットアップ:**
+
+1. GitHub → Settings → Secrets and variables → Actions
+2. `OPENAI_API_KEY` を追加
+3. PR を作成すると workflow が実行される（手動: Actions → Codex PR review → Run workflow）
+
 ## v0.1 方針
 
 - `published: false` のまま下書きで詰める
