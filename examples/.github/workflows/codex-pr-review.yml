@@ -50,10 +50,12 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             codex exec review \
               --base "${{ github.event.pull_request.base.ref }}" \
+              --dangerously-bypass-approvals-and-sandbox \
               -o codex-review.md
           else
             codex exec review \
               --uncommitted \
+              --dangerously-bypass-approvals-and-sandbox \
               -o codex-review.md
           fi
           tr -d '\0' < codex-review.md > codex-review-clean.md
