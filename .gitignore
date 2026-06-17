@@ -1,3 +1,7 @@
 node_modules
 .DS_Store
 .cursor
+
+# CI Codex home — only config.toml is tracked
+.github/codex/home/*
+!.github/codex/home/config.toml
