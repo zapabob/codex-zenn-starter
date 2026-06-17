@@ -21,7 +21,9 @@ Copy-Item examples\AGENTS.md.python-cli.md .\AGENTS.md
 | `AGENTS.md.node-nextjs.md` | Node.js / Next.js + npm |
 | `AGENTS.md.rust-cli.md` | Rust CLI / cargo workspace |
 | `AGENTS.md.codex-fork.md` | openai/codex 系 upstream-first フォーク |
-| `AGENTS.md.with-mcp.md` | MCP サーバー利用時の追加ルール |
+| `AGENTS.md.with-sop-design.md` | SOP / DESIGN.md 参照付き AGENTS.md |
+| `docs/sop/engineering.md` | 共通エンジニアリング SOP |
+| `docs/design/DESIGN.md` | フロントエンド設計例 |
 | `global-vs-project.md` | `~/.codex/AGENTS.md` とリポジトリ `AGENTS.md` の違い |
 
 ## CI 向けサンプル
