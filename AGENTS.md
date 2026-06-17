@@ -16,7 +16,15 @@ Zenn book starter for OpenAI Codex practice guide. Markdown content under `artic
 - Do not commit secrets, API keys, or personal paths from `~/.codex/`.
 - Implementation logs go to `_docs/`; not part of Zenn published content.
 
-## CI
+## CI PR review (Codex)
+When reviewing a PR via `codex exec review --base`, respond in Markdown:
+
+1. **Summary** — 1–2 sentences on what changed
+2. **Review** — risks, test gaps, or suggestions (bullets OK)
+
+Follow Commands/Rules above. Do not suggest unrelated refactors. If tests were not run, say what to verify.
+
+## CI setup
 - PR review: `.github/workflows/codex-pr-review.yml` (ChatGPT auth via `CODEX_AUTH_JSON` secret)
 - Config: `.github/codex/home/config.toml`
 - Prompt: `.github/codex/prompts/review.md`

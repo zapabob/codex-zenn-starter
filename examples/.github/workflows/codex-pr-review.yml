@@ -50,18 +50,14 @@ jobs:
           CODEX_HOME: ${{ github.workspace }}/.github/codex/home
         run: |
           set -euo pipefail
-          PROMPT_FILE=".github/codex/prompts/review.md"
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            BASE_REF="${{ github.event.pull_request.base.ref }}"
             codex exec review \
-              --base "$BASE_REF" \
-              -o codex-review.md \
-              - < "$PROMPT_FILE"
+              --base "${{ github.event.pull_request.base.ref }}" \
+              -o codex-review.md
           else
             codex exec review \
               --uncommitted \
-              -o codex-review.md \
-              - < "$PROMPT_FILE"
+              -o codex-review.md
           fi
           {
             echo 'review_message<<EOF'

@@ -8,7 +8,8 @@ project_doc_fallback_filenames = ["AGENTS.md"]
 project_doc_max_bytes = 32768
 
 [sandbox_workspace_write]
-network_access = false
+# ChatGPT auth CI needs HTTPS to OpenAI; codex-action API-key path may use false
+network_access = true
 
 # Optional: enable read-only GitHub MCP in CI (token via env in workflow)
 # [mcp_servers.github]
