@@ -1,0 +1,17 @@
+# CI profile for Codex GitHub Action
+# Copy to .github/codex/home/config.toml in your repository
+
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+
+project_doc_fallback_filenames = ["AGENTS.md"]
+project_doc_max_bytes = 32768
+
+[sandbox_workspace_write]
+network_access = false
+
+# Optional: enable read-only GitHub MCP in CI (token via env in workflow)
+# [mcp_servers.github]
+# command = "npx"
+# args = ["-y", "@modelcontextprotocol/server-github@latest"]
+# env_vars = ["GITHUB_TOKEN"]

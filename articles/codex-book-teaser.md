@@ -85,8 +85,10 @@ Codexは、コードを書かせるだけの道具ではありません。
 | 3 | AGENTS.mdでリポジトリに規律を与える |
 | 4 | SandboxとApprovalを設計する |
 | 5 | zapabob/codexを読む |
+| 6 | MCPでCodexを外部ツールとつなぐ |
+| 7 | GitHub ActionsとCIにCodexを組み込む |
 
-その後、MCP、CI/CD、フォーク運用、Windows-firstな検証ログ、AGENTS.mdテンプレート集などを追加していく予定です。
+`examples/` に AGENTS.md テンプレートと CI ワークフロー例を同梱しています。
 
 ## おわりに
 

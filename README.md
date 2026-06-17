@@ -6,16 +6,23 @@ Zenn向けの初期原稿セットです。
 
 ```text
 .
+├── AGENTS.md
 ├── articles/
 │   └── codex-book-teaser.md
-└── books/
-    └── openai-codex-design-book/
-        ├── config.yaml
-        ├── why-codex-book.md
-        ├── codex-cli-setup.md
-        ├── agents-md-design.md
-        ├── sandbox-approval.md
-        └── reading-zapabob-codex.md
+├── books/
+│   └── openai-codex-design-book/
+│       ├── config.yaml
+│       ├── why-codex-book.md
+│       ├── codex-cli-setup.md
+│       ├── agents-md-design.md
+│       ├── sandbox-approval.md
+│       ├── reading-zapabob-codex.md
+│       ├── mcp-integration.md
+│       └── ci-codex-action.md
+└── examples/
+    ├── AGENTS.md.*.md
+    ├── global-vs-project.md
+    └── .github/codex/ ...
 ```
 
 ## 使い方
