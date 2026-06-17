@@ -87,8 +87,10 @@ Codexは、コードを書かせるだけの道具ではありません。
 | 5 | zapabob/codexを読む |
 | 6 | MCPでCodexを外部ツールとつなぐ |
 | 7 | GitHub ActionsとCIにCodexを組み込む |
+| 8 | フォークを壊さず拡張する |
+| 9 | Codex時代の開発作法をまとめる |
 
-`examples/` に AGENTS.md テンプレートと CI ワークフロー例を同梱しています。
+`examples/` に AGENTS.md テンプレートと CI ワークフロー例を同梱しています。[GitHub リポジトリ](https://github.com/zapabob/codex-zenn-starter) の `main` へ push すると Zenn にデプロイされます。
 
 ## おわりに
 

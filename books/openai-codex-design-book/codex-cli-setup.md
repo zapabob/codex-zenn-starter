@@ -275,7 +275,14 @@ codex exec --json "テスト失敗の原因を特定してください" | Out-Fi
 ```
 
 :::details 認証（CI）
-GitHub Actions では [openai/codex-action](https://github.com/openai/codex-action) の利用が推奨されています。`OPENAI_API_KEY` をジョブ全体の環境変数に置かず、Action 経由で渡すことで、リポジトリ内の任意コードからキーが読まれるリスクを下げられます。
+CI では次の2経路があります（第7章詳細）。
+
+| 経路 | 向いているケース |
+|------|-----------------|
+| ChatGPT（`CODEX_AUTH_JSON`） | 個人・非公開リポ、ローカルと同じプラン |
+| API キー + `codex-action` | 公開リポ、proxy + `drop-sudo` |
+
+いずれも secret をジョブ全体の `env:` に置かないでください。本リポジトリは ChatGPT 認証の workflow を同梱しています。
 :::
 
 ## 最初の安全なセッション例

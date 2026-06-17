@@ -23,7 +23,7 @@ CI では次の2通りがあります。
 ローカルで `codex login status` が **Logged in using ChatGPT** なら、`~/.codex/auth.json` を GitHub secret に登録できます。
 
 ```powershell
-gh secret set CODEX_AUTH_JSON -R owner/repo --app actions < "$env:USERPROFILE\.codex\auth.json"
+Get-Content -Raw "$env:USERPROFILE\.codex\auth.json" | gh secret set CODEX_AUTH_JSON -R owner/repo --app actions
 ```
 
 :::message alert
@@ -57,12 +57,20 @@ gh secret set CODEX_AUTH_JSON -R owner/repo --app actions < "$env:USERPROFILE\.c
         run: |
           codex exec review \
             --base "${{ github.event.pull_request.base.ref }}" \
+            --dangerously-bypass-approvals-and-sandbox \
             -o codex-review.md
+          tr -d '\0' < codex-review.md > codex-review-clean.md
 ```
 
 :::message
-`codex exec review --base` はカスタム PROMPT 引数と併用できません。レビュー観点は **AGENTS.md** に書き、Codex が自動読み込みします。`prompts/review.md` は `codex exec`（非 review）や codex-action 向けの参考です。
+`codex exec review --base` はカスタム PROMPT 引数と併用できません。レビュー観点は **AGENTS.md** に書きます。`prompts/review.md` は codex-action 向けの参考です。
 :::
+
+:::message alert
+GitHub Actions の ubuntu ランナーでは、デフォルト sandbox（bwrap）が uid map で失敗することがあります。本リポジトリでは **ランナー自体が隔離環境** である前提で `--dangerously-bypass-approvals-and-sandbox` を使います。ローカル開発では第4章の sandbox 設定を維持してください。
+:::
+
+レビュー結果は NUL バイトを含むことがあるため、`GITHUB_OUTPUT` ではなく **artifact** で次ジョブへ渡します（`examples/.github/workflows/codex-pr-review.yml` 参照）。
 
 ## なぜ codex-action を使うか（API キー経路）
 
@@ -110,12 +118,16 @@ sandbox_mode = "workspace-write"
 project_doc_fallback_filenames = ["AGENTS.md"]
 
 [sandbox_workspace_write]
-network_access = false
+# ChatGPT 認証は OpenAI API への HTTPS が必要
+network_access = true
 ```
 
-CI では承認プロンプトが出せないため `approval_policy = "never"` になります。その代わり **sandbox を workspace-write に固定** し、ネットワークはオフにします。
+| 認証経路 | `network_access` | 理由 |
+|---------|------------------|------|
+| ChatGPT（`CODEX_AUTH_JSON`） | `true` | モデル API 呼び出しに HTTPS が必要 |
+| API キー + codex-action（proxy） | `false` でも可 | proxy が通信を肩代わりする構成もある |
 
-`danger-full-access` を CI に持ち込まないでください。
+CI では承認プロンプトが出せないため `approval_policy = "never"` になります。`danger-full-access` を CI に持ち込まないでください。
 
 ## PR レビュー用プロンプト
 
@@ -137,39 +149,37 @@ Constraints:
 
 ## ワークフロー全体像
 
-`examples/.github/workflows/codex-pr-review.yml` をベースにします。
+**正本（ChatGPT 認証）:** リポジトリの `.github/workflows/codex-pr-review.yml` および `examples/.github/workflows/codex-pr-review.yml`。
+
+要点:
+
+1. `codex_review` ジョブ — `contents: read` のみ、Codex 実行、artifact アップロード
+2. `post_review` ジョブ — `pull-requests: write` のみ、コメント投稿
 
 ```yaml
-name: Codex PR review
-
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-
-jobs:
-  codex_review:
-    runs-on: ubuntu-latest
+  post_review:
+    needs: codex_review
+    if: github.event_name == 'pull_request'
     permissions:
-      contents: read
-    outputs:
-      final_message: ${{ steps.run_codex.outputs.final-message }}
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
         with:
-          ref: refs/pull/${{ github.event.pull_request.number }}/merge
-          persist-credentials: false
+          name: codex-review
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const body = fs.readFileSync("codex-review-clean.md", "utf8").trim();
+            await github.rest.issues.createComment({ ... });
+```
 
-      - name: Pre-fetch PR refs
-        env:
-          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          git fetch --no-tags origin \
-            "$PR_BASE_REF" \
-            "+refs/pull/$PR_NUMBER/head"
+### API キー経路（codex-action）の例
 
+公開リポジトリやチーム共有では `openai/codex-action@v1` が有効です。
+
+```yaml
       - name: Run Codex
-        id: run_codex
         uses: openai/codex-action@v1
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
@@ -194,21 +204,7 @@ jobs:
 
 ### コメント投稿ジョブ
 
-Codex ジョブは `contents: read` のみ。パッチ適用や PR コメントは **別ジョブ** で `pull-requests: write` を付与します。
-
-```yaml
-  post_review:
-    needs: codex_review
-    permissions:
-      pull-requests: write
-    steps:
-      - uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.issues.createComment({ ... });
-        env:
-          CODEX_FINAL_MESSAGE: ${{ needs.codex_review.outputs.final_message }}
-```
+Codex ジョブは `contents: read` のみ。パッチ適用や PR コメントは **別ジョブ** で `pull-requests: write` を付与します（ChatGPT 経路では artifact 経由で本文を渡す）。
 
 ## AGENTS.md 連携の要点
 
@@ -245,12 +241,12 @@ Windows 中心のリポジトリでも、Codex CI ジョブは **`ubuntu-latest`
 
 ## セキュリティチェックリスト
 
-- [ ] `OPENAI_API_KEY` は secrets 経由のみ。ジョブ `env:` に置かない
-- [ ] `safety-strategy: drop-sudo`（Linux/macOS）
-- [ ] Codex ステップをジョブの **最後** に近い位置に（後続ステップが状態を継承しない）
-- [ ] PR 本文・コメントからの **プロンプトインジェクション** を sanitize
-- [ ] `allow-users` / `allow-bots` で workflow トリガーを制限
-- [ ] CI config は `workspace-write` + `network_access = false`
+- [ ] secret は Actions secrets のみ（`CODEX_AUTH_JSON` または `OPENAI_API_KEY`）
+- [ ] API キー経路では `safety-strategy: drop-sudo`（Linux/macOS）
+- [ ] ChatGPT 経路では artifact でレビュー本文を渡し、`GITHUB_OUTPUT` に NUL を入れない
+- [ ] Codex ステップをジョブの **最後** に近い位置に
+- [ ] PR 本文・コメントからの **プロンプトインジェクション** を意識する
+- [ ] `allow-users` / `allow-bots` で workflow トリガーを制限（必要なら）
 - [ ] 自動 patch は必ず PR 経由。直接 push しない
 
 ## 本リポジトリへの適用
@@ -277,12 +273,12 @@ Zenn 原稿向け AGENTS.md 例:
 
 ## この章の完了条件
 
-- [ ] ChatGPT 認証（`CODEX_AUTH_JSON`）か API キー（`codex-action`）のどちらを使うか決められる
+- [ ] ChatGPT 認証か API キー（`codex-action`）のどちらを使うか決められる
+- [ ] artifact 経由の PR コメント投稿を説明できる
 - [ ] `codex-home` で CI 専用 config を分離できる
 - [ ] AGENTS.md と prompt-file の役割分担を説明できる
-- [ ] `drop-sudo` と sandbox 設定の理由を説明できる
 - [ ] レビュー用と autofix 用のジョブ権限分離を設計できる
 
 ---
 
-本 v0.2 時点で、MCP（第6章）と CI（第7章）までをカバーしました。`examples/` ディレクトリのテンプレートをコピーして、自リポジトリに AGENTS.md と GitHub Actions を展開してください。
+第8章ではフォーク拡張、第9章では本書全体のまとめを扱います。`examples/` をコピーして自リポジトリに AGENTS.md と GitHub Actions を展開してください。
