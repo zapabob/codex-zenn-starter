@@ -57,11 +57,12 @@ gh secret set CODEX_AUTH_JSON -R owner/repo --app actions < "$env:USERPROFILE\.c
         run: |
           codex exec review \
             --base "${{ github.event.pull_request.base.ref }}" \
-            -o codex-review.md \
-            - < .github/codex/prompts/review.md
+            -o codex-review.md
 ```
 
-`CODEX_HOME` 配下の `config.toml` で `approval_policy = "never"` と `sandbox_mode = "workspace-write"` を固定します。
+:::message
+`codex exec review --base` はカスタム PROMPT 引数と併用できません。レビュー観点は **AGENTS.md** に書き、Codex が自動読み込みします。`prompts/review.md` は `codex exec`（非 review）や codex-action 向けの参考です。
+:::
 
 ## なぜ codex-action を使うか（API キー経路）
 
