@@ -58,7 +58,7 @@ gh secret set CODEX_AUTH_JSON -R owner/repo --app actions < "$env:USERPROFILE\.c
           codex exec review \
             --base "${{ github.event.pull_request.base.ref }}" \
             -o codex-review.md \
-            "$(cat .github/codex/prompts/review.md)"
+            - < .github/codex/prompts/review.md
 ```
 
 `CODEX_HOME` 配下の `config.toml` で `approval_policy = "never"` と `sandbox_mode = "workspace-write"` を固定します。
