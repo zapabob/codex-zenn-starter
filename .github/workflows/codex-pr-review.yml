@@ -56,12 +56,12 @@ jobs:
             codex exec review \
               --base "$BASE_REF" \
               -o codex-review.md \
-              "$(cat "$PROMPT_FILE")"
+              - < "$PROMPT_FILE"
           else
             codex exec review \
               --uncommitted \
               -o codex-review.md \
-              "$(cat "$PROMPT_FILE")"
+              - < "$PROMPT_FILE"
           fi
           {
             echo 'review_message<<EOF'

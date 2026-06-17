@@ -8,5 +8,3 @@ Constraints:
 - Follow AGENTS.md in this repository for test/lint expectations.
 - Do not suggest unrelated refactors.
 - If tests were not run, say what should be verified.
-
-The workflow provides PR context via `{CODEX_ACTION_GITHUB_EVENT_PATH}` when available.
