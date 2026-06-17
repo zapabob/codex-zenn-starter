@@ -21,12 +21,15 @@ Zenn向けの初期原稿セットです。
 ## 使い方
 
 ```bash
-npm init --yes
-npm install zenn-cli
-npx zenn init
-# この starter の articles/ と books/ をコピー
-npx zenn preview
+npm install
+npm run preview   # http://localhost:8000
+npm run new:article
+npm run new:book
 ```
+
+GitHub: https://github.com/zapabob/codex-zenn-starter
+
+Zenn連携: https://zenn.dev/dashboard/deploys から `codex-zenn-starter` を連携
 
 ## v0.1 方針
 
