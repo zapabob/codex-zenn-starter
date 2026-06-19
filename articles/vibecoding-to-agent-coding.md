@@ -2,11 +2,12 @@
 title: "Vibecodingを捨てよ、エージェントコーディングへ行け"
 emoji: "🚪"
 type: "tech"
-topics: ["vibecoding", "aiagent", "codex", "agentsmd", "softwareengineering"]
+topics: ["aiagent", "codex", "agentsmd", "softwareengineering", "antipattern"]
 published: true
+slug: vibecoding-to-agent-coding
 ---
 
->Vibecodingを捨てよ、エージェントコーディングへ行け。
+**Vibecodingを捨てよ、エージェントコーディングへ行け。**
 
 煽りに聞こえるかもしれない。でも意図は単純だ。**「なんとなく AI に書かせて、なんとなく動いた」で終わる開発** から、**repo に規律を載せた AI 開発** へ移れ、という話だ。
 
