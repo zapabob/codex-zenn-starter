@@ -2,9 +2,8 @@
 title: "Vibecodingを捨てよ、エージェントコーディングへ行け"
 emoji: "🚪"
 type: "tech"
-topics: ["aiagent", "codex", "agentsmd", "softwareengineering", "antipattern"]
+topics: ["codex", "aiagent", "agentsmd", "antipattern", "softwareengineering"]
 published: true
-slug: vibecoding-to-agent-coding
 ---
 
 **Vibecodingを捨てよ、エージェントコーディングへ行け。**

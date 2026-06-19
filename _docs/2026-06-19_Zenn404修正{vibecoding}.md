@@ -11,7 +11,8 @@
 | # | 仮説 | 結果 |
 |---|------|------|
 | 1 | push 未反映 | ❌ remote `06cd44f` 確認済み |
-| 2 | Zenn デプロイ skip（slug/topics） | 🔄 ファイル名変更 + slug 明示で再デプロイ |
+| 2 | 非公式 `slug:` frontmatter でデプロイ全体失敗 | ✅ 削除（slug はファイル名のみ） |
+| 3 | topics `vibecoding` | ✅ 除去済み |
 | 3 | レートリミット | 要 Zenn ダッシュボード確認 |
 
 ## 対応
