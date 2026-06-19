@@ -34,3 +34,15 @@ Follow Commands/Rules above. Do not suggest unrelated refactors. If tests were n
 - `npm run preview` shows expected pages at http://localhost:8000
 - Frontmatter valid for Zenn (title, emoji, topics, published)
 - git push triggers Zenn deploy when GitHub integration is enabled
+
+## Learned User Preferences
+- Keep `articles/` and `books/` free of author-to-author advice, planning notes, internal nicknames, and publishing strategy (price/page targets); use `_docs/` or non-published drafts for internal notes.
+- When expanding Codex chapters, deep-research official OpenAI Codex docs and zapabob/codex before drafting.
+- Validate `examples/` CI/workflows in this repository before writing abstract CI or fork chapters.
+- Prefer ChatGPT/Codex sign-in auth (`~/.codex/auth.json` → `CODEX_AUTH_JSON` in CI) over exposing `OPENAI_API_KEY` in workflows.
+
+## Learned Workspace Facts
+- Zenn deploys from GitHub `zapabob/codex-zenn-starter` on branch `main` to zenn.dev/zapabob.
+- Primary book slug is `openai-codex-design-book`; teaser article slug is `codex-book-teaser`.
+- Book scope centers on AGENTS.md, Sandbox, Approval, CI, and zapabob/codex as an upstream-first fork case study.
+- `examples/` holds copyable AGENTS.md templates and `.github/` workflow patterns for readers.
