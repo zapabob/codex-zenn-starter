@@ -10,7 +10,7 @@ published: true
 
 ソフトウェア工学のベストプラクティスは、AI 以前からある。変わったのは、**守らなくても一見進む** ことだ。test を飛ばしても diff は merge できそうになる。設計をチャットだけで済ませても、その場では問題が見えない。
 
-だから今、改めて **repo に固定する価値がある原則** だけを整理する。反パターン集の裏返しではなく、「エージェント時代も捨てない良い習慣」の正面リストだ。
+だから今、改めて **repo に固定する価値がある原則** だけを整理する（シリーズ最新）。反パターン集の裏返しではなく、「エージェント時代も捨てない良い習慣」の正面リストだ。
 
 関連: [反パターン10](https://zenn.dev/zapabob/articles/agent-dev-antipatterns-10) · [MILSPEC 規律と `_docs`](https://zenn.dev/zapabob/articles/agents-md-docs-traceability-milspec) · [MCP 工具箱の整理](https://zenn.dev/zapabob/articles/mcp-toolbox-organization) · [Codex 設計本](https://zenn.dev/zapabob/books/openai-codex-design-book)
 
