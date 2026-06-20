@@ -34,4 +34,7 @@ https://zenn.dev/zapabob/articles/vibecoding-to-agent-coding
 
 ## 次
 
-- レートリミット解除後、全文入り `vibecoding-to-agent-coding.md` を push → URL 200 確認
+- **2026-06-19 12:14 時点:** レートリミット解除後も Zenn 最終デプロイは `11:08:55` 止まり。12:12 / 12:14 の push は未反映
+- ダッシュボード https://zenn.dev/dashboard/deploys で **手動デプロイ／失敗ログ** を確認
+- 反映後 URL（現リモート slug）: https://zenn.dev/zapabob/articles/agent-coding-migration
+- 旧 slug `vibecoding-to-agent-coding` は rename 済み（404 正常）
