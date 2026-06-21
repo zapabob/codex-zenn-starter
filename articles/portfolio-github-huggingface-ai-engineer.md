@@ -3,7 +3,7 @@ title: "未経験からAIエンジニアを目指すなら：GitHubとHugging Fa
 emoji: "🏗️"
 type: "idea"
 topics: ["github", "huggingface", "aiagent", "career", "portfolio"]
-published: false
+published: true
 ---
 
 AIコーディングの時代になって、未経験からエンジニアを目指す人に必要なものは少し変わりました。
