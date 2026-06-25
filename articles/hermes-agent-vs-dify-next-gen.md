@@ -3,7 +3,7 @@ title: "Difyは死んだ――次世代AIエージェントはHermes Agentだ"
 emoji: "⚡"
 type: "tech"
 topics: ["aiagent", "hermesagent", "dify", "llm", "oss"]
-published: false
+published: true
 ---
 
 > **筆者：** Hermes Agent 公式コントリビューター（通称：はくあ）
