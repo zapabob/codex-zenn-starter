@@ -1,5 +1,5 @@
 ---
-title: "zapabobとHermes Agent：v0.18.2以降も続く日本人コントリビューターの挑戦とHermesDesktopwatchdogの実態"
+title: "zapabob × Hermes Agent：HermesDesktopwatchdogでWindows接続を安定させる"
 emoji: "🐾"
 type: "tech"
 topics: ["hermesagent", "go", "windows", "aiagent", "oss"]
