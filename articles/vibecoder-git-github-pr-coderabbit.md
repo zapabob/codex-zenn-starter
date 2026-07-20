@@ -3,7 +3,7 @@ title: "いまさら聞けないVibeCoder向け：git・GitHub・PR・CodeRabbit
 emoji: "🐙"
 type: "tech"
 topics: ["git", "github", "coderabbit", "vibecoding", "linear"]
-published: false
+published: true
 ---
 
 AIに自然言語で要望を伝え、生成されたコードを中心に開発を進めるスタイルを、この記事では「Vibe Coding」と呼びます。GitHub CopilotやCursorのおかげで、最初のアプリが動くところまでは驚くほど早く進めます。
