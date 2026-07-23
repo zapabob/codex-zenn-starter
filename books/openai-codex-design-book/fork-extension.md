@@ -85,6 +85,7 @@ zapabob/codex では release evidence を重視します。
 
 - [ ] 影響範囲の `cargo test -p <crate>`
 - [ ] config 変更後は `just write-config-schema`
+- [ ] 単一正本 `VERSION` と `version-metadata.json` (`fork_version`, `upstream_base`) を更新
 - [ ] Windows / Linux の少なくとも一方で手動スモーク（`codex --version`、`codex exec` の基本動作）
 - [ ] CHANGELOG に Added / Changed と upstream baseline を記載
 
