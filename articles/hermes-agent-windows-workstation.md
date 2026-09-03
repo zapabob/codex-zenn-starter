@@ -1,5 +1,5 @@
 ---
-title: "Hermes Agentを「Windows AIワークステーション」にした話"
+title: "「IDEにAIを足す」のをやめた。AIエージェントを中心にWindows環境を再構築した話"
 emoji: "🖥️"
 type: "tech"
 topics: ["llm", "windows", "python", "oss", "aiagent"]
@@ -8,344 +8,276 @@ published: true
 
 GitHub: https://github.com/zapabob/hermes-agent-windows
 
-私は現在、Nous ResearchのOSSである **Hermes Agent** をベースにしたWindows-first downstream、**Hermes Agent Windows Workstation Edition** を開発しています。
-
-最初は「Hermes AgentをWindowsで安定して動かしたい」というところから始まりました。
-
-しかし、ローカルLLM、長期Memory、ブラウザ、Git、Security Center、Voice、VRChat/Unity、24時間稼働のWatchdogなどを追加していった結果、現在は単純な「Hermes AgentのWindows版」という説明では実態と合わなくなってきました。
-
-いま作っているものを一言で表すなら、
-
-> **WindowsそのものをAI Agentのワークステーションにする環境**
-
-です。
+:::message
+**【3行でわかるこの記事】**
+1. 「IDEの横にAIチャットを生やす」アプローチに限界を感じ、**AIエージェントを作業の中心に据えてOS（Windows）環境そのものを組み直した**。
+2. Git・Webブラウザ・ローカルLLM・長期複合記憶（忘却曲線）・そして**ClamAV/YARAによるセキュリティセンター**まで同一画面に統合。
+3. デモで数分動くオモチャではなく、**24時間常駐して生き続けるエージェント**のためのWindows AIワークステーションをOSSとして開発中。
+:::
 
 ---
 
-## 現在の画面
+## はじめに：「AI付きエディタ」への違和感
+
+いま、開発者の多くがCursorやVS CodeのAI拡張を使っています。それらは間違いなく便利です。
+
+しかし、自律型AIエージェントを本気で開発・運用しようとしたとき、強烈な違和感にぶつかりました。
+
+> **「なぜ人間用のエディタの片隅に、無理やりAIを同居させているのか？」**
+> **「AIエージェントが仕事をするなら、エージェントを中心にOS環境を再構築すべきではないか？」**
+
+VS CodeにAIチャットを足すのではなく、**「AIエージェントの作業場（ワークステーション）の中に、IDE、ブラウザ、端末、ローカル推論、セキュリティを配置する」**。
+
+この発想から生まれたのが、Nous ResearchのOSS「Hermes Agent」をベースにしたWindows-firstダウンストリーム、**Hermes Agent Windows Workstation Edition** です。
+
+---
+
+## まず画面を見てほしい
+
+これが、現在開発しているワークステーションの実際の画面です。
 
 ![Security Center・X・YouTube・Gitリポジトリツリーを同時に表示したワークステーション画面](/images/hermes-workstation-security-center.png)
-*中央ではSecurity Centerのスキャン結果（検査済み2,617ファイル / 検出32）を表示し、右側ではWebブラウザとGit repository treeを同時に開いている。*
+*中央にSecurity Centerのスキャン結果（2,617ファイル検査 / 32検出・検疫）、右側にブラウザとGitリポジトリツリーを同時配置*
 
 ![Hermes Agentホーム画面。エージェントを中心にブラウザ・Git・セッション管理を統合](/images/hermes-workstation-home.png)
-*エージェントホーム画面。左側にセッション管理・Telegram・Discord・CRONジョブ、中央にエージェント対話、右上にWebブラウザ、右端にリポジトリツリーを配置。*
+*エージェントホーム画面。左側にセッション・Telegram・Discord・CRON、中央に対話、右上にWebブラウザ、右端にGitツリー*
 
-一見するとIDEに近いのですが、設計思想は少し違います。
-
-一般的なIDEにAIを追加するのではなく、
-
-> **AI Agentを中心に、その周囲へIDE、ブラウザ、セキュリティ、ローカル推論、Memory、Automationを統合する**
-
-という方向で作っています。
+一見すると「少し変わったIDE」に見えるかもしれません。
+しかし、その設計思想は根本から異なります。
 
 ---
 
-## AI付きIDEではなく、Agent中心のWorkstation
+## パラダイムシフト：「IDE＋AI」から「Agent中心のWorkstation」へ
 
-VS CodeやJetBrains系IDEをかなり単純化すると、
+一般的なIDE（VS CodeやJetBrains）の中心にあるループはこれです。
 
 ```text
-Code → Build → Test → Debug
+Code → Build → Test → Debug （人間が主役）
 ```
 
-が中心になります。
-
-Hermes Agent Windowsでは、これをもう少し広く捉えています。
+しかし、自律型AIエージェントがこなす実際の業務ループは、はるかに広大です。
 
 ```text
 Observe → Research → Reason → Code → Test → Review → Operate → Automate → Recover
 ```
 
-コードを書くことも重要ですが、それはAI Agentが行う仕事の一部分です。
+コードを書くのは、エージェントの仕事のほんの1ステップに過ぎません。
 
-実際のAgentには、以下のような仕事も必要になります。
+- リポジトリの構造を読み解く
+- Webを検索して最新ドキュメントを当たる
+- シェルコマンドを実行して挙動を確かめる
+- MCP（Model Context Protocol）ツールを呼び出す
+- 過去の記憶（Memory）を検索して教訓を引っ張り出す
+- 定期ジョブを実行し、コケたらプロセスを自己復旧する
 
-- Git repositoryを読む
-- Webを調査する
-- Shell commandを実行する
-- MCP toolを呼ぶ
-- Memoryを検索する
-- 定期ジョブを動かす
-- 外部サービスへ接続する
-- 失敗したprocessを復旧する
-
-そのため、Hermes Agent Windowsではこれらを**同じworkspace上**へ集めています。
+これを別々のウィンドウや別アプリでやらせると、コンテキストの分断と権限の混乱が起きます。
+だからこそ、**これらすべてを同一のワークスペース上に集約しました。**
 
 ---
 
-## IDE相当のGit操作
+## ここが既存の環境と決定的に違う5つの特徴
 
-現在DesktopにはGit repository treeを表示できます。単なるtree viewerではなく、以下の操作も統合しています。
+### 1. 「IDE並みのGit操作」をエージェントと人間が共有する
 
-- Git CRUD
+デスクトップ右側にはGitリポジトリツリーが常駐しています。
+
+単なるファイルビューアではありません。
+- Git CRUD操作
 - commit / diff / review
-- branch / worktree
-- repository状態確認
-
-右側のrepository treeからファイルを確認しながら、左側ではHermes Agentと相談し、同じDesktop上で変更をcommitできます。
+- branch / worktree 操作
+- リポジトリの状態監視
 
 ```text
 Hermes Agent
       │
-      ├── Repository tree
-      ├── Git operations
-      ├── Diff / Review
-      ├── Terminal
-      └── Coding Agent
+      ├── Repository Tree
+      ├── Git CRUD / Operations
+      ├── Diff & Human Review
+      ├── Terminal / Shell
+      └── Coding Agent Core
 ```
 
-重要なのは、Git UIだけ独立したIDEを作っているのではないことです。Hermes Agent自身がrepositoryを理解し、toolを使い、その結果を同じworkspaceで人間が確認できるようにしています。
+右側で人間が差分を見ながら、左側のHermes Agentと相談し、同じ画面上で即座にコミットを打つ。
+「エディタを開いて、ターミナルを開いて、Gitクライアントを開いて…」という往復はここにはありません。
 
----
+### 2. ブラウザも「別アプリ」ではなくワークスペースの1ペイン
 
-## BrowserもWorkspaceの一部
+WebブラウザもOSの別ウィンドウではなく、エージェントと同じワークスペース内のペインとして統合されています。
 
-Webブラウザも別アプリではなく、workspace paneとして扱えます。
+エージェント開発をしていると、
+```text
+Webで一次情報調査 → リポジトリ確認 → 実装 → テスト → エラーを再検索
+```
+というループが何百回も発生します。
+ブラウザが同じ画面にあることで、エージェント自身のブラウザ自動操作（Browser Automation）と人間の視線が完全に同期します。
 
-AI Agentを実際に使っていると、
+### 3. なぜ「Security Center」が同居しているのか？（ここが一番の狂気）
+
+このワークステーションの最大の特徴が、画面中央に鎮座する **Security Center** です。
+
+| 監視・防御レイヤー | 使用エンジン・技術 |
+| :--- | :--- |
+| **ウイルス・マルウェア検知** | ClamAV / YARA / Windows Defender |
+| **ファイル完全性検証** | Hash Reputation |
+| **隔離・遮断** | Quarantine 管理 |
+| **実行ログ・履歴** | Scan & Execution Audit History |
+
+「なぜAIエージェントの画面にアンチウイルスや検疫画面があるのか？」と思うかもしれません。
+
+理由は明快です。
+**AIエージェントに強い権限（ローカルファイル書き換え、Shell実行、Git操作、MCP外部接続）を渡すなら、その実行環境をリアルタイムで観測・防御できなければ、怖くて24時間常駐などさせられないからです。**
+
+おもちゃのデモならセキュリティは無視できます。しかし、本気で自律作業を任せるなら「防御と観測」はワークステーションの第一級機能でなければなりません。
+
+### 4. 外部Go Watchdogによる「24時間死なない」常駐アーキテクチャ
+
+AIエージェントをローカルで動かしたことがある人なら、誰もが経験したはずです。
+「朝起きたらプロセスが落ちていた」「メモリリークで固まっていた」。
+
+Hermes Agent Windowsでは、`scripts/windows/watchdog-go` に外部Go言語製Watchdogを配置しています。
+ここで徹底している鉄則が、**「再起動の権限（Restart Authority）を唯一化すること」** です。
 
 ```text
-Webで調査 → repository確認 → 実装 → テスト → 再調査
+       ┌──────────────────────┐
+       │   Go Watchdog (唯一)  │ ── 死活監視 & 自動リカバリ
+       └──────────┬───────────┘
+                  │
+  ┌───────────────┼───────────────┐
+  ▼               ▼               ▼
+Hermes Backend   Local Embedding   Desktop UI
 ```
 
-という往復が非常に多くなります。そこでBrowserもAgent workspaceの一部として扱うことにしました。Hermes Agent本体のbrowser automationとも組み合わせられます。
+Pythonプロセス、Electron、PowerShell、Goがそれぞれ勝手に自己再起動を試みると、カスケード障害を起こしてシステムが破綻します。
+「外部のGo Watchdogだけが唯一の再起動権限を持つ」というシングル・オーソリティ設計により、24時間365日の連続稼働を可能にしています。
 
----
+### 5. 「チャット履歴」を捨て、「忘却と意味グラフ」を持つ記憶モデル
 
-## Security CenterをAI Agentと同じ画面に置く
+「過去の会話履歴をプロンプトに全部突っ込む」のは、記憶（Memory）ではありません。ただのログ垂れ流しです。
 
-AI Agentへ強いtool authorityを与えるほど、Securityは重要になります。
-
-Hermes Agent Windowsには独自の **Security Center** を追加しています。現在は以下を一つの画面から確認できます。
-
-| 項目 | 詳細 |
-|------|------|
-| ウイルス検知 | ClamAV / YARA / Windows Defender |
-| ファイル検証 | hash reputation |
-| 検疫 | quarantine管理 |
-| 履歴 | scan history |
-
-Agentがshell、browser、Git、MCP、local filesystemへアクセスできる以上、
-
-> 「Agentが何をできるか」だけではなく、「その実行環境をどう観測し、どう防御するか」もWorkstationの機能
-
-だと考えています。
-
----
-
-## Local LLMを第一級のruntimeとして扱う
-
-Hermes Agent WindowsではCloud APIだけではなく、local inferenceも重視しています。
-
-現在扱っているもの：
-
-- llama.cpp / GGUF
-- local embeddings
-- provider fallback
-- hot-swap / hot-standby
-
-特にWindows AI workstationでは、Cloud LLM＋Local LLM＋Local Embeddingを同時利用できる構成が便利です。
-
-```text
-Generation      → 高速なCloud/Local provider
-Memory Retrieval → Local embeddings
-Fallback        → Local llama.cpp
-```
-
-モデルAPIが一時的に利用できなくても、Workstation全体まで停止しない設計を目指しています。
-
----
-
-## Memoryも単なるChat Historyではない
-
-Hermes Agent本体にもMemory infrastructureがありますが、Windows downstreamではさらに独自のMemory実装を追加しています。
-
-代表的なのが、**Semantic Graph** と **Ebbinghaus Cognitive Memory** です。
+本環境では、独自の **Semantic Graph（意味グラフ）** と **Ebbinghaus Cognitive Memory（忘却曲線モデル）** を実装しています。
 
 ```text
 Conversation History ≠ Long-term Memory ≠ Semantic Retrieval
 ```
 
-大量のチャットログをそのままpromptへ投入するのではなく、以下の仕組みをAgent側へ持たせています。
+- **検索可能な記憶**: ベクトル検索 ＋ 知識グラフ ＋ 全文検索のハイブリッド
+- **関係性リンク**: ノード間で意味が繋がるグラフ構造
+- **忘却のメカニズム**: エビングハウスの忘却曲線に基づき、使われない記憶の重要度（Salience）が減衰
+- **再活性化**: リハーサル（想起）されることで強固に定着する長期記憶
 
-- **検索可能な記憶**（ベクトル＋グラフ＋全文検索の多経路）
-- **関係性**（ノード間の意味リンク）
-- **忘却**（Ebbinghaus忘却曲線によるSalience減衰）
-- **再活性化**（リハーサルによる重要記憶の強化）
+人間が「すべての出来事を丸暗記していないが、大事な教訓は覚えている」のと同じ構造をエージェントに与えています。
 
 :::message
-複合記憶モデルとRAGの違いについては、別記事「[RAGと何が違う？AIエージェントに同一性と忘却を与える複合記憶アーキテクチャ](/articles/composite-memory-vs-rag)」で詳しく解説しています。
+※ 複合記憶アーキテクチャの詳細は別記事「[RAGと何が違う？AIエージェントに同一性と忘却を与える複合記憶アーキテクチャ](/articles/composite-memory-vs-rag)」にまとめています。
 :::
 
----
+### 6. コーディングだけじゃない：Voice、Unity、VRChatへの受肉
 
-## Voice / VRChat / Unity
-
-このWorkstationはCodingだけを対象にしていません。
+このワークステーションは、黒い画面でコードを書くだけの環境ではありません。
 
 ```text
 Hermes Agent
      │
-     ├── Text
-     ├── Voice（VOICEVOX / local TTS / Irodori TTS）
+     ├── Text / CLI
+     ├── Voice (VOICEVOX / local TTS / 彩色TTS)
      ├── Unity
-     └── VRChat（autonomy / AITuber integrations）
+     └── VRChat (自律行動 / AITuber連携)
 ```
 
-Agentが単なるCLI chatbotではなく、Windows上で動作する複数のアプリケーションや仮想空間と接続できるようにしています。
+画面の中でテキストを吐くだけのAIではなく、音声で喋り、仮想空間（VRChatやUnity）へインタラクションを送る「受肉したエージェント」へ直結しています。Windowsネイティブだからこそ、デスクトップ上のあらゆるクリエイティブアプリやメディアパイプラインとシームレスに繋がります。
 
 ---
 
-## 24時間動かすためのGo Watchdog
+## 泥臭い裏側：Upstreamの猛スピードにどう追いつくか？
 
-AI Agentはデモで数分動けばよいものと、24時間常駐するものでは設計が変わります。
+Nous ResearchのHermes Agent本体は、凄まじいスピードで開発が進んでいます。
+単純に `git merge upstream/main` を繰り返すだけでは、Windowsダウンストリームの独自拡張は一瞬でコンフリクトして壊れます。
 
-Hermes Agent Windowsでは、`scripts/windows/watchdog-go` に外部Go Watchdogを置いています。Desktop backend、local embedding service、関連runtimeなどの状態を監視します。
+そこで、upstreamのコミットを1つずつ精査する「セマンティック統合」パイプラインを運用しています。
 
-設計上重要なのは、**restart authorityを複数作らないこと**です。
+| 分類 | 処理方針 |
+| :--- | :--- |
+| **ADOPT** | そのまま取り込み |
+| **COMPOSE** | Windowsの権限モデル・アーキテクチャと結合して統合 |
+| **DEFER** | プラットフォーム互換性の観点から保留 |
+| **KEEP_DOWNSTREAM** | ダウンストリーム固有の実装を維持 |
 
-Hermes本体、Electron、PowerShell、Goがそれぞれ勝手に再起動を始めると、障害時の挙動が予測不能になります。そのためforkでは、
-
-> **外側のautomatic restart authorityはGo Watchdogだけ**
-
-というルールを明示しています。
-
-:::message
-Go Watchdogの設計と接続安定化については「[zapabob × Hermes Agent：HermesDesktopwatchdogでWindows接続を安定させる](/articles/zapabob-hermesagent-watchdog-contributor)」も参照してください。
-:::
-
----
-
-## Upstreamをmergeするのではなくsemantic integrationする
-
-Hermes Agent本体は非常に速い速度で開発されています。そのため単純に `git merge upstream/main` を繰り返す方式ではWindows固有機能が壊れやすくなります。
-
-そこで現在はupstream SHAを固定し、upstream commitを以下に分類しています。
-
-| 分類 | 意味 |
-|------|------|
-| **ADOPT** | そのまま採用 |
-| **COMPOSE** | Windows downstreamのauthority modelと組み合わせて統合 |
-| **DEFER** | 保留（プラットフォーム互換性の問題等） |
-| **KEEP_DOWNSTREAM** | downstream固有実装を維持 |
-
-最近のintegration campaignでは、
+直近の統合キャンペーンの実績値です。
 
 ```text
-Upstream delta commits : 1,049
-ADOPT                  :   325
-COMPOSE                :   723
-DEFER_PLATFORM         :     1
-Direct file intersection: 414
+Upstream 差分コミット : 1,049 件
+├─ ADOPT (採用)        :   325 件
+├─ COMPOSE (再構成)    :   723 件
+└─ DEFER (保留)        :     1 件
+ファイル衝突交差数     :   414 ファイル
 ```
 
-つまりupstreamをそのままコピーするのではなく、大半の変更をWindows downstreamのauthority modelと組み合わせています。
+1,000件以上のアップストリームコミットに対し、7割以上を「単なるコピペではなくWindowsの権限モデルに合わせて再合成（COMPOSE）」しながら追従しています。
+「Windows-first」を謳う裏には、この泥臭いマージ戦略があります。
+
 
 ---
 
-## Windows-firstだがWindows-onlyではない
+## 驚いたこと：まだReleaseを出していないのにClone数が…
 
-repository名は `hermes-agent-windows` ですが、Hermes core自体はLinuxでも動きます。PythonのメインCIはUbuntu上で実行されています。
+先日、GitHubのTrafficアナリティクスを見て驚きました。
 
-Windows固有なのは主に以下です。
-
-- Go Watchdog / PowerShell lifecycle
-- Windows packaging
-- NTFS/process handling
-- Windows-specific GPU/runtime qualification
-
-実態としては、**Windows Native Tier-1 / Linux-compatible core** に近い構成です。
-
----
-
-## GitHub Trafficを見たら予想外だった
-
-最近GitHub Trafficを確認したところ、直近14日で次の数字が出ていました。
+直近14日間の数字です。
 
 | 指標 | 数値 |
-|------|------|
-| Git clones | 9,808 |
-| Unique cloners | 237 |
-| Page views | 227 |
-| Unique visitors | 80 |
+| :--- | :--- |
+| **Git clones** | **9,808** 回 |
+| **Unique cloners** | **237** 人 |
+| **Page views** | 227 pv |
+| **Unique visitors** | 80 人 |
 
-Git cloneにはCIやbot、自動化も含まれる可能性があるため、237人が実際に利用したとは言えません。一方で、source-onlyでまだ正式Release assetも公開していない段階としては興味深い数字でした。
+CIやボットによるクローンも含まれるため、237人全員が手動実行したとは言えません。
+しかし、**インストーラーや正式Releaseバイナリすらまだ出していない、純粋なソースコード段階のリポジトリ**としては異様な数字でした。
 
-現在Starはまだ6です。実装規模に対してGitHub上で何を作っているrepositoryなのかが十分伝わっていなかった可能性もあり、今回この記事を書いてみることにしました。
+……それなのに、**GitHubのStarはまだ「6」でした（笑）。**
+
+「あ、これ何を作っているのか全然外に伝わってないな」と痛感しました。
+コードだけゴリゴリ書いて満足していましたが、何を目指しているのかをちゃんと言語化しなければ届かない。それがこの記事を書いた理由です。
 
 ---
 
-## なぜ「Windows版Hermes」ではなく「AI Workstation」なのか
+## 「OS上でAIを使う」から「AIがOSを作業場にする」未来へ
 
-現在の構成をまとめるとこうなります。
+全体の構成を俯瞰すると、このようになっています。
 
 ```text
 Hermes Agent Windows Workstation
 │
-├── Agent Runtime
-│   ├── Sessions / Bots / MCP / Tools / Cron
-│
-├── Engineering
-│   ├── Git Tree / Git CRUD / Diff / Review / Terminal
-│
-├── Browser
-│   └── Integrated Web Workspace
-│
-├── Security
-│   ├── ClamAV / YARA / Defender
-│
-├── Local AI
-│   ├── llama.cpp / GGUF / Embeddings / Memory
-│
-├── Media
-│   ├── Voice / TTS / VRChat / Unity
-│
-└── Operations
-    ├── Go Watchdog / Recovery / Windows-native CI
+├── Agent Runtime   : セッション / MCP / ツール / CRON自律実行
+├── Engineering     : Gitツリー / CRUD / Diff / Review / Terminal
+├── Browser         : 統合型Webワークスペース（調査・自動化）
+├── Security        : ClamAV / YARA / Windows Defender / 検疫
+├── Local AI        : llama.cpp / GGUF / Local Embeddings / 複合記憶
+├── Media / Real    : Voice (VOICEVOX/TTS) / Unity / VRChat連携
+└── Operations      : 外部Go Watchdogによる24時間常駐・自己修復
 ```
 
-なので最近は、
+私たちはこれまで、「人間がOSを操作し、その中の1アプリとしてAIを使う」のが当たり前だと思っていました。
 
-> Hermes AgentのWindows版を作っている
+でも、自律型エージェントが本当に実用段階に入るなら、主客は逆転します。
 
-というより、
+> **「AIエージェントを中心に据え、その手足としてOSの全リソースを再配分する」**
 
-> **Hermes AgentをkernelとしてWindows AI Workstationを作っている**
-
-と考えるようになりました。
+このパラダイムで作るデスクトップ環境は、想像以上にエキサイティングです。
 
 ---
 
-## 今後
+## リポジトリはこちら（OSS / MIT License）
 
-まだやりたいことはかなりあります。
+開発はすべてオープンソース（MIT License）で進めています。
 
-- LSP diagnostics / symbol navigation
-- test result visualization
-- Local Model management UI
-- Agent observability dashboard
-- Security Center強化
-- Linux compatibility documentation
-- stable Windows installer / portable release
+👉 **GitHub: [zapabob/hermes-agent-windows](https://github.com/zapabob/hermes-agent-windows)**
 
-Hermes Agent upstreamの進化も非常に速いため、最新機能についてもmoving `main`を直接追うのではなく、immutable snapshotを使って継続的に統合していきます。
+- WindowsでローカルAIや自律エージェントを本気で動かしたい方
+- 「AI付きエディタ」の次の世界を一緒に作りたい方
+- 単純に「この画面、なんか面白そう」と思ってくれた方
 
----
+ぜひリポジトリを覗いてみてください。**StarやIssue、PR、大歓迎です！**
 
-## Repository
-
-**Hermes Agent Windows Workstation Edition**
-
-https://github.com/zapabob/hermes-agent-windows
-
-MIT Licenseです。
-
-WindowsでLocal AI、Agent、Memory、Voice、VR、開発環境を一つにまとめたい人には、かなり面白い実験環境になってきたと思います。
-
-StarやIssue、PRも歓迎です。
-
-そして何より、
-
-**「OS上でAIを使う」のではなく、「AIを中心にOS上の作業環境を組み直す」と何が起きるか。**
-
-もう少しこの方向を掘ってみます。
+「AIを中心にOS環境を組み直すと何が起きるのか」。
+ぜひ一緒にこの実験を面白がってもらえたら嬉しいです。
