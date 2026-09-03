@@ -24,7 +24,11 @@ GitHub: https://github.com/zapabob/hermes-agent-windows
 
 ## 現在の画面
 
-中央ではHermes Agentとの会話やSecurity Centerを表示し、右側ではWebブラウザとGit repository treeを同時に開いています。
+![Security Center・X・YouTube・Gitリポジトリツリーを同時に表示したワークステーション画面](/images/hermes-workstation-security-center.png)
+*中央ではSecurity Centerのスキャン結果（検査済み2,617ファイル / 検出32）を表示し、右側ではWebブラウザとGit repository treeを同時に開いている。*
+
+![Hermes Agentホーム画面。エージェントを中心にブラウザ・Git・セッション管理を統合](/images/hermes-workstation-home.png)
+*エージェントホーム画面。左側にセッション管理・Telegram・Discord・CRONジョブ、中央にエージェント対話、右上にWebブラウザ、右端にリポジトリツリーを配置。*
 
 一見するとIDEに近いのですが、設計思想は少し違います。
 
